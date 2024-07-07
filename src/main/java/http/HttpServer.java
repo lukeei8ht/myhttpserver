@@ -3,11 +3,16 @@ package http;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import http.request.HttpRequest;
+import http.response.HttpResponse;
 
 public class HttpServer {
 
@@ -37,14 +42,19 @@ public class HttpServer {
     }
 
     private void task(Socket socket) {
-        try (InputStream in = socket.getInputStream(); OutputStream out = socket.getOutputStream()) {
-            byte[] buffer = new byte[1 << 13];
-            int len;
-            while ((len = in.read(buffer)) != -1) {
-                out.write(buffer, 0, len);
+        try (socket; InputStream in = socket.getInputStream(); OutputStream out = socket.getOutputStream()) {
+            HttpRequest httpRequest;
+            try {
+                httpRequest = HttpRequest.fromInputStream(in);
+            } catch (Throwable t) {
+                HttpResponse.fromThrowable(t).write(out);
+                return;
             }
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
+
+            // TODO process the request
+            out.write(httpRequest.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
