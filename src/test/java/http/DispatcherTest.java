@@ -22,7 +22,7 @@ class DispatcherTest {
 
         new Dispatcher().dispatch(httpRequest, out);
 
-        assertEquals("HTTP/1.1 200 OK\r\nContent-Length: 404\r\n\r\n%s".formatted(
+        assertEquals("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n194\r\n%s\r\n0\r\n\r\n".formatted(
                         Files.readString(Paths.get(getClass().getResource("/static/index.html").toURI()))),
                 out.toString());
     }
@@ -35,7 +35,7 @@ class DispatcherTest {
 
         new Dispatcher().dispatch(httpRequest, out);
 
-        assertEquals("HTTP/1.1 200 OK\r\nContent-Length: 404\r\n\r\n%s".formatted(
+        assertEquals("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n194\r\n%s\r\n0\r\n\r\n".formatted(
                         Files.readString(Paths.get(getClass().getResource("/static/index.html").toURI()))),
                 out.toString());
     }

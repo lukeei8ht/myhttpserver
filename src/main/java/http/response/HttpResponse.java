@@ -69,20 +69,10 @@ public class HttpResponse {
         out.write("%s %d %s".formatted(version, status.getCode(), status.getMessage())
                 .getBytes(StandardCharsets.US_ASCII));
 
-        byte[] bodyByteArray = null;
         if (contentLength > 0) {
             headers.put("Content-Length", String.valueOf(contentLength));
         } else if (body != null) {
-            // TODO content-lengthがなかったらchunked encodingにする
-            ByteArrayOutputStream bodyStrOut = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1 << 13];
-            int len;
-            while ((len = body.read(buffer)) != -1) {
-                bodyStrOut.write(buffer, 0, len);
-            }
-
-            bodyByteArray = bodyStrOut.toByteArray();
-            headers.put("Content-Length", Integer.toString(bodyByteArray.length));
+            headers.put("Transfer-Encoding", "chunked");
         }
 
         for (var header : headers.entrySet()) {
@@ -93,13 +83,21 @@ public class HttpResponse {
 
         out.write("\r\n\r\n".getBytes(StandardCharsets.US_ASCII));
 
-        if (bodyByteArray != null) {
-            out.write(bodyByteArray);
-        } else if (body != null) {
+        if (body != null) {
+            boolean chunked = contentLength <= 0;
             byte[] buffer = new byte[1 << 13];
             int len;
             while ((len = body.read(buffer)) != -1) {
+                if (chunked) {
+                    out.write("%x\r\n".formatted(len).getBytes(StandardCharsets.US_ASCII));
+                }
                 out.write(buffer, 0, len);
+                if (chunked) {
+                    out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+                }
+            }
+            if (chunked) {
+                out.write("%x\r\n\r\n".formatted(0).getBytes(StandardCharsets.US_ASCII));
             }
         }
 
