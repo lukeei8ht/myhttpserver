@@ -15,7 +15,7 @@ public class HttpRequest {
 
     private final Map<String, String> headers;
 
-    private HttpRequest(RequestLine requestLine, Map<String, String> headers) {
+    public HttpRequest(RequestLine requestLine, Map<String, String> headers) {
         this.requestLine = requestLine;
         this.headers = Map.copyOf(headers);
     }
@@ -95,5 +95,35 @@ public class HttpRequest {
 
     public String getHeader(String key) {
         return headers.get(key.toLowerCase());
+    }
+
+    public static HttpRequestBuilder builder(HttpMethod method) {
+        return new HttpRequestBuilder(method);
+    }
+
+    public static class HttpRequestBuilder {
+        private final HttpMethod method;
+
+        private String target;
+
+        private final Map<String, String> headers = new HashMap<>();
+
+        HttpRequestBuilder(HttpMethod method) {
+            this.method = method;
+        }
+
+        public HttpRequestBuilder target(String target) {
+            this.target = target;
+            return this;
+        }
+
+        public HttpRequestBuilder header(String key, String value) {
+            this.headers.put(key, value);
+            return this;
+        }
+
+        public HttpRequest build() {
+            return new HttpRequest(new RequestLine(method, target, "HTTP/1.1"), headers);
+        }
     }
 }
