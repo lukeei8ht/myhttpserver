@@ -1,7 +1,9 @@
 package http;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.ServerSocket;
@@ -51,8 +53,7 @@ public class HttpServer {
                 return;
             }
 
-            // TODO process the request
-            out.write(httpRequest.toString().getBytes(StandardCharsets.UTF_8));
+            new Dispatcher().dispatch(httpRequest, out);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

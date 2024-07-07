@@ -1,7 +1,10 @@
 package http.response;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringBufferInputStream;
 import java.nio.charset.StandardCharsets;
 
 public class HttpResponse {
@@ -9,11 +12,16 @@ public class HttpResponse {
 
     private final Status status;
 
-    private final String message;
+    private final InputStream body;
 
-    public HttpResponse(Status status, String message) {
+    private HttpResponse(Status status, String message) {
         this.status = status;
-        this.message = message;
+        this.body = new ByteArrayInputStream(message.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private HttpResponse(Status status, InputStream body) {
+        this.status = status;
+        this.body = body;
     }
 
     public static HttpResponse fromThrowable(Throwable t) {
@@ -22,17 +30,28 @@ public class HttpResponse {
         }
 
         return new HttpResponse(Status.INTERNAL_SERVER_ERROR, t.getMessage());
+    }
 
+    public static HttpResponse ok(InputStream body) {
+        return new HttpResponse(Status.OK, body);
+    }
+
+    public static HttpResponse notFound(String message) {
+        return new HttpResponse(Status.NOT_FOUND, message);
     }
 
     public void write(OutputStream out) throws IOException {
         out.write("%s %d %s".formatted(version, status.getCode(), status.getMessage())
-                .getBytes(StandardCharsets.UTF_8));
+                .getBytes(StandardCharsets.US_ASCII));
 
-        out.write("\r\n\r\n".getBytes(StandardCharsets.UTF_8));
+        out.write("\r\n\r\n".getBytes(StandardCharsets.US_ASCII));
 
-        if (message != null) {
-            out.write(message.getBytes(StandardCharsets.UTF_8));
+        if (body != null) {
+            byte[] buffer = new byte[1 << 13];
+            int len;
+            while ((len = body.read(buffer)) != -1) {
+                out.write(buffer, 0, len);
+            }
         }
     }
 }
