@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -20,7 +21,7 @@ public class HttpRequest {
     }
 
     // https://datatracker.ietf.org/doc/html/rfc9112#name-field-syntax
-    private static Pattern headerPattern = Pattern.compile("^(?<key>\\S+):[ \\t]?(?<value>.+)[ \\t]?$");
+    private static Pattern headerPattern = Pattern.compile("^(?<key>[^:]+):[ \\t]?(?<value>.+)[ \\t]?$");
 
     /**
      * ヘッダーマップにヘッダーを追加する<br>
@@ -29,7 +30,7 @@ public class HttpRequest {
      * @param headers    ヘッダーマップ
      * @param headerLine ヘッダー行文字列
      */
-    private static void addHeader(Map<String, String> headers, String headerLine) {
+    static void addHeader(Map<String, String> headers, String headerLine) {
         Matcher matcher = headerPattern.matcher(headerLine);
         if (matcher.matches()) {
             headers.put(matcher.group("key").toLowerCase(), matcher.group("value"));
@@ -49,7 +50,7 @@ public class HttpRequest {
     public static HttpRequest fromInputStream(InputStream in) throws IOException, IllegalArgumentException {
         RequestLine requestLine = null;
         Map<String, String> headers = new HashMap<>();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.US_ASCII));
         String line;
         boolean firstLine = true;
         while ((line = reader.readLine()) != null) {
