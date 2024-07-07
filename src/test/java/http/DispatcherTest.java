@@ -22,7 +22,7 @@ class DispatcherTest {
 
         new Dispatcher().dispatch(httpRequest, out);
 
-        assertEquals("HTTP/1.1 200 OK\r\n\r\n%s".formatted(
+        assertEquals("HTTP/1.1 200 OK\r\nContent-Length: 404\r\n\r\n%s".formatted(
                         Files.readString(Paths.get(getClass().getResource("/static/index.html").toURI()))),
                 out.toString());
     }
@@ -35,7 +35,7 @@ class DispatcherTest {
 
         new Dispatcher().dispatch(httpRequest, out);
 
-        assertEquals("HTTP/1.1 200 OK\r\n\r\n%s".formatted(
+        assertEquals("HTTP/1.1 200 OK\r\nContent-Length: 404\r\n\r\n%s".formatted(
                         Files.readString(Paths.get(getClass().getResource("/static/index.html").toURI()))),
                 out.toString());
     }
@@ -49,7 +49,7 @@ class DispatcherTest {
         new Dispatcher().dispatch(httpRequest, out);
 
         assertEquals(
-                "HTTP/1.1 404 Not Found\r\n\r\nThe requested URL /not-found was not found on this server.",
+                "HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Length: 58\r\n\r\nThe requested URL /not-found was not found on this server.",
                 out.toString());
     }
 
@@ -63,7 +63,7 @@ class DispatcherTest {
         new Dispatcher().dispatch(httpRequest, out);
 
         assertEquals(
-                "HTTP/1.1 404 Not Found\r\n\r\nThe requested URL /css/../images/http.png was not found on this server.",
+                "HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Length: 71\r\n\r\nThe requested URL /css/../images/http.png was not found on this server.",
                 out.toString());
     }
 }

@@ -12,6 +12,7 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import http.request.HttpRequest;
 import http.response.HttpResponse;
@@ -19,6 +20,8 @@ import http.response.HttpResponse;
 public class HttpServer {
 
     private final int port;
+
+    private final long keepAliveTimeout = TimeUnit.SECONDS.toMillis(60);
 
     private volatile boolean running;
 
@@ -45,15 +48,32 @@ public class HttpServer {
 
     private void task(Socket socket) {
         try (socket; InputStream in = socket.getInputStream(); OutputStream out = socket.getOutputStream()) {
-            HttpRequest httpRequest;
-            try {
-                httpRequest = HttpRequest.fromInputStream(in);
-            } catch (Throwable t) {
-                HttpResponse.fromThrowable(t).write(out);
-                return;
-            }
+            String connection = "keep-alive";
+            long lastConnectionTime = System.currentTimeMillis();
+            while (!"close".equals(connection)) {
+                while (in.available() == 0) {
+                    if (System.currentTimeMillis() - lastConnectionTime > keepAliveTimeout) {
+                        return;
+                    }
+                    Thread.onSpinWait();
+                }
 
-            new Dispatcher().dispatch(httpRequest, out);
+                lastConnectionTime = System.currentTimeMillis();
+
+                HttpRequest httpRequest;
+                try {
+                    httpRequest = HttpRequest.fromInputStream(in);
+                    connection = httpRequest.getHeader("Connection");
+                } catch (Throwable t) {
+                    HttpResponse.fromThrowable(t).write(out);
+                    return;
+                }
+
+                HttpResponse httpResponse = new Dispatcher().dispatch(httpRequest, out);
+                if (httpResponse.isCloseConnection()) {
+                    return;
+                }
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
