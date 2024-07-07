@@ -54,6 +54,19 @@ class DispatcherTest {
     }
 
     @Test
+    void unsupported_target_response_not_found_error_with_target_like_resources_path() throws IOException {
+        HttpRequest httpRequest = HttpRequest.builder(HttpMethod.GET).target("/css/hoge.png").build();
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        new Dispatcher().dispatch(httpRequest, out);
+
+        assertEquals(
+                "HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Length: 61\r\n\r\nThe requested URL /css/hoge.png was not found on this server.",
+                out.toString());
+    }
+
+    @Test
     void protect_directory_traversal() throws IOException {
         HttpRequest httpRequest = HttpRequest.builder(HttpMethod.GET).target("/css/../images/http.png")
                 .build();

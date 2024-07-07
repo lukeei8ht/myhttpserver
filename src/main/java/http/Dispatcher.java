@@ -19,7 +19,9 @@ public class Dispatcher {
         if (!target.contains("..") /** avoid directory traversal */ && (target.startsWith(
                 "/css/") || target.startsWith("/js/") || target.startsWith("/images/"))) {
             try (InputStream is = getClass().getResourceAsStream("/static/" + target)) {
-                return HttpResponse.ok(is).write(out);
+                if (is != null) {
+                    return HttpResponse.ok(is).write(out);
+                }
             }
         }
 
