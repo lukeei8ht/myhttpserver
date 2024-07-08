@@ -55,7 +55,10 @@ public class HttpServer {
                     if (System.currentTimeMillis() - lastConnectionTime > keepAliveTimeout) {
                         return;
                     }
-                    Thread.onSpinWait();
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException ignore) {
+                    }
                 }
 
                 lastConnectionTime = System.currentTimeMillis();
