@@ -21,7 +21,7 @@ public class HttpServer {
 
     private final int port;
 
-    private final long keepAliveTimeout = TimeUnit.SECONDS.toMillis(60);
+    private final int keepAliveTimeout = (int) TimeUnit.SECONDS.toMillis(60);
 
     private volatile boolean running;
 
@@ -48,25 +48,15 @@ public class HttpServer {
 
     private void task(Socket socket) {
         try (socket; InputStream in = socket.getInputStream(); OutputStream out = socket.getOutputStream()) {
+            socket.setSoTimeout(keepAliveTimeout);
             String connection = "keep-alive";
-            long lastConnectionTime = System.currentTimeMillis();
             while (!"close".equals(connection)) {
-                while (in.available() == 0) {
-                    if (System.currentTimeMillis() - lastConnectionTime > keepAliveTimeout) {
-                        return;
-                    }
-                    try {
-                        Thread.sleep(10);
-                    } catch (InterruptedException ignore) {
-                    }
-                }
-
-                lastConnectionTime = System.currentTimeMillis();
-
                 HttpRequest httpRequest;
                 try {
                     httpRequest = HttpRequest.fromInputStream(in);
                     connection = httpRequest.getHeader("Connection");
+                } catch (SocketTimeoutException closeConnection) {
+                    return;
                 } catch (Throwable t) {
                     HttpResponse.fromThrowable(t).write(out);
                     return;
