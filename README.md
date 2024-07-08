@@ -2,6 +2,6 @@
 
 http/1.1
 
-- [ ] keep-alive
-- [ ] chunked transfer encoding
+- [x] keep-alive
+- [x] chunked transfer encoding
 - [ ] cache-control
