@@ -9,6 +9,7 @@ method
 
 header
 - [x] keep-alive
+- [x] content-length
 - [x] chunked transfer encoding
 - [ ] cache-control
 - [ ] ...
